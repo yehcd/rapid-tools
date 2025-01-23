@@ -1,0 +1,2 @@
+dsbSiteString	rapid_datafile	shortName
+chr11:5,226,985	X95_gCY201_12A3_Dox100_binned-25kbps.bw	chr11:5,226,985_X95_gCY201_12A3_bin25kbps

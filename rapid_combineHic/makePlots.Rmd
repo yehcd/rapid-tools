@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+<!-- # ```{r} -->
+<!-- # plot(cars) -->
+<!-- ``` -->
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+# libraries
+```{r}
+source("../resources/commonFunctions.R")
+source("../resources/hicFunctions.R")
+
+library(patchwork)
+```
+
+
+
+# BASIC SETUP - USING PRECALCULATED/EXTRACTED VALUES
+dump 'ls.final' list object to file to avoid having to reload data & re-calculate HiC/BALANCED values again
+
+Otherwise, use "combineRapidHic_2.Rmd" to regenerate & dump this pre-processed data.
+```{r}
+dsbMaskSize <- 10 * 15000
+dumpName <-
+  "./example/RaPID+HicBalanced_DSBmask-300kbps_individual.RData"
+dumpName <-
+  "./example/HBB_HicRaPID.RData"
+# saveRDS(object = ls.final, file = dumpName)
+ls.final <- readRDS(file = dumpName)
+ls.final
+```
+
+
+
+load data for plotting
+RED (UPPER) is RAPID-seq
+BLUE (LOWER) is HiC
+```{r}
+dir.output <- "./output/"
+linewidth <- 0.2
+
+# for loop encalsulation
+for (i in 1:length(ls.final)){
+  index <- i
+
+
+# load data
+
+
+df.plot <- ls.final[[index]]
+df.plot
+
+outputName <- paste0("index", index, "_", gsub(":","-", names(ls.final))[[index]])
+
+
+# set breaks & plot dimensions
+xBreaks <- c(-4E6, -3E6,-2E6,-1E6, 0 , 1E6, 2E6, 3E6, 4E6)
+xLabels <- c("-4 Mbps","-3 Mbps","-2 Mbps","-1 Mbps","0 Mbps", "1 Mbps", "2 Mbps", "3 Mbps", "4 Mbps") 
+  
+yBreaks <- c(0, 1)
+
+xlim <- c(-3.5E6,+3.5E6)
+ylim <- c(-0.0, +1.1)
+#
+#
+# plot RaPID-seq data*
+
+plotA <- ggplot(data = df.plot,
+                aes(x = midpoint,
+                    y = rapid.obs)) + geom_area(aes(x = midpoint, y = rapid.obs), fill = "#C69180")+ geom_line(aes(x = midpoint, y = rapid.obs), color = "#8A181A", linewidth = linewidth) + geom_line(
+                      aes(x = midpoint, y = expected),
+                      linetype = "dashed",
+                      color = "gray30",
+                      linewidth = linewidth
+                    )
+
+# formatting
+plotA <-
+  plotA + xlab(element_blank()) + ylab("RaPID") + geom_hline(yintercept = 0,
+                                                                                   color = "gray20", linetype = "dotted", linewidth = linewidth) + geom_vline(xintercept = 0,
+                                                                                                                  color = "gray20",
+                                                                                                                  linetype = "dotted", linewidth = linewidth)  +
+  theme(axis.text.y = element_text(margin = margin(r = 10), color = "black"),
+        axis.text.x = element_text(margin = margin(t = 10), color = "black"))  + coord_cartesian(
+          xlim = xlim,
+          ylim = ylim,
+          expand = TRUE
+        )
+
+plotA <- plotA + theme_classic() + theme(
+  axis.line = element_line(linewidth = linewidth),
+  axis.ticks = element_line(linewidth = linewidth)
+)
+
+plotA <- plotA + geom_hline(
+  yintercept = c(1),
+  color = "gray20",
+  linetype = "dotted", linewidth = linewidth
+) + annotate(
+  geom = "rect",
+  xmin = -dsbMaskSize,
+  xmax = +dsbMaskSize,
+  ymin = -Inf,
+  ymax = +Inf,
+  alpha = 0.30,
+  fill = "black"
+)
+
+# set breaks
+plotA <-
+  plotA + scale_y_continuous(breaks = yBreaks) + scale_x_continuous(breaks = xBreaks, labels = xLabels)
+
+
+
+#
+#
+# plot HiC/4C data
+plotB <- ggplot(data = df.plot,
+                aes(x = midpoint,
+                    y = hic.obs)) + geom_area(aes(x = midpoint, y = hic.obs), fill = "#9DB0C4") + geom_line(aes(x = midpoint, y = hic.obs), color = "#03688C", linewidth = linewidth) + geom_line(
+                      aes(x = midpoint, y = expected),
+                      linetype = "dashed",
+                      color = "gray30",
+                      linewidth = linewidth
+                    )
+
+
+# formatting
+plotB <-
+  plotB + xlab("distance from DSB (bps)") + ylab("HiC") + geom_hline(yintercept = 0,
+                                                                                   color = "gray20", linetype = "dotted", linewidth =linewidth) + geom_vline(xintercept = 0,
+                                                                                                                  color = "gray20",
+                                                                                                                  linetype = "dotted", linewidth = linewidth)  +
+  theme(axis.text.y = element_text(margin = margin(r = 10), color = "black"),
+        axis.text.x = element_text(margin = margin(t = 10), color = "black"))  + coord_cartesian(
+          xlim = xlim,
+          ylim = ylim,
+          expand = TRUE
+        )
+
+plotB <- plotB + theme_classic() + theme(
+  axis.line = element_line(linewidth = linewidth),
+  axis.ticks = element_line(linewidth = linewidth)
+)
+
+plotB <- plotB + geom_hline(
+  yintercept = c(1),
+  color = "gray20",
+  linetype = "dotted", linewidth = linewidth
+) + annotate(
+  geom = "rect",
+  xmin = -dsbMaskSize,
+  xmax = +dsbMaskSize,
+  ymin = -Inf,
+  ymax = +Inf,
+  alpha = 0.30,
+  fill = "black"
+)
+
+# set breaks
+plotB <-
+  plotB + scale_y_continuous(breaks = yBreaks) + scale_x_continuous(breaks = xBreaks, labels = xLabels)
+
+# adjust Y-axis for flipping
+plotB <- plotB+ theme(axis.text.y = element_text(angle = 180))
+
+
+#
+#
+# pathwork combine plots
+plotExport <- plotA / plotB
+plotExport
+
+
+# save plot
+ggsave(
+  filename = paste0(dir.output, outputName, ".pdf"),
+  plot = plotExport,
+  device = "pdf",
+  width = 2000,
+  height = 1200,
+  units = "px"
+)
+
+
+}
+```
+

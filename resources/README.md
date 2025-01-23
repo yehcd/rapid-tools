@@ -1,0 +1,1 @@
+The directory contains the common functions and datafiles used by the other R Notebook examples for processing of RaPID-seq data. To run these examples, first clone this repository to your local computer and perform the basic preparation steps.

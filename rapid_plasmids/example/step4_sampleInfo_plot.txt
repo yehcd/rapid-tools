@@ -1,0 +1,3 @@
+outputName	bigwig_data_hg38	bigwig_data_plasmid	plasmid_seqname
+C3R5X126_bkgrdSubtracted_B1-A1	C3R5X126_hg38_bkgrdSubtracted_B1-A1_binned-25kbps.bw	C3R5X126_plasmid_bkgrdSubtracted_B1-A1.bw	pCY29_HBB_100
+C3R5X126_bkgrdSubtracted_B2-A2	C3R5X126_hg38_bkgrdSubtracted_B2-A2_binned-25kbps.bw	C3R5X126_plasmid_bkgrdSubtracted_B2-A2.bw	pCY29_HBB_100

@@ -1,0 +1,2 @@
+outputNamePrefix	signalDatafileName	signalLambdaCount	backgroundDatafileName	backgroundLambdaCount	binSizes
+X95_gCY201_12A3_Dox100	319841_46-X104_8_S3.HTseq.out.gz	3439253	DamID_X104_07_f.HTseq.out.gz	6070092	25000;50000;100000

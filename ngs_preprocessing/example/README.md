@@ -1,0 +1,1 @@
+These FASTQ files have been subsampled to 500k read pairs.
