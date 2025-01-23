@@ -11,7 +11,7 @@ The primary outputs of interest are in:
 
 
 ## general data processing workflow
-![rapid_hic_workflow](https://github.com/yehcd/rapid-tools/blob/initial/misc/figures/rapid_hic.png)
+![rapid_basic_workflow](https://github.com/yehcd/rapid-tools/blob/initial/misc/figures/rapid_basic.PNG)
 
 
 
