@@ -1,0 +1,192 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+# ```{r}
+# plot(cars)
+# ```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+LIBRARIES
+```{r}
+source ("../resources/commonFunctions.R")
+source ("../resources/commonFunctions_RapidPlasmid.R")
+
+```
+
+
+STEP 1 - initial read coverage standardization to FKPM
+calculate FKPM for reads aligned to HG38 or plasmids
+Also mask reads from DSB region (optional)
+```{r}
+# 'Warning: NAs introduced by coercion' is caused by trying to parse the plasmid
+# GATC map 'tileID' value using regex for 'chrA', which doesn't match plasmid naming.
+#
+# However, the 'tileID' value is not actually used for anything important and can
+# be ignored
+#
+# TODO: CONSIDER: should be able to directly subtract FKPM value as they are spike-in and
+# total read (hg38+plasmid) corrected?
+
+
+getwd()
+
+# set 'dsbMask' to NULL if no masking is desired
+dsbMask <- "chr11:5226485-5227484" # cut site of sgHBB +/- 500bps
+# dsbMask <- NULL
+
+#
+# Hg38-aligned reads datafile FKPM calculation
+calculateRapidPlasmidFkpmForHg38(
+  pathToSampleInfo = "./example/step1_sampleInfo_fpkm.txt",
+  genomeName = "hg38",
+  pathToGatcHg38 = "../resources/gatcMap_hg38.gff.gz",
+  pathToGatcPlasmids = "../resources/gatcMap_plasmids.gff",
+  inputDataDir = "./example/",
+  outputDir = "./output/output1_fkpmCalc/",
+  dskMask = dsbMask
+)
+
+#
+# plasmid-aligned reads datafile FKPM calculation
+calculateRapidPlasmidFkpmForPlasmids(
+  pathToSampleInfo = "./example/step1_sampleInfo_fpkm.txt",
+  pathToPlasmidSizes = "../resources/plasmidSizes.txt",
+  pathToGatcHg38 = "../resources/gatcMap_hg38.gff.gz",
+  pathToGatcPlasmids = "../resources/gatcMap_plasmids.gff",
+  inputDataDir = "./example/",
+  outputDir = "./output/output1_fkpmCalc/",
+  dskMask = dsbMask
+)
+
+```
+
+
+STEP 2 - Spike-in correction based on Lambda-gDNA read counts
+```{r}
+# SPIKE-IN Correction for Lambda gDNA
+
+# do spike-in correction based on Lambda gDNA-aligned read counts
+#
+# the defined pairs in the 'sampleInfo' need to be the same as in the following
+# the background subtraction step.
+makeSpikeInCorrectedBigwigs(
+  pathToSampleInfo = "./example/step2_sampleInfo_spikeIn.txt",
+  inputDataDir = "./output/output1_fkpmCalc",
+  outputDir = "./output/output2_spikeInCorrected"
+)
+```
+
+
+STEP 3 - Background subtraction (+DSB minus noDSB)
+MATCHED samples for plasmids
+```{r}
+## BACKGROUND SUBTRACTION (+DSB minus noDSB)
+
+# Hg38-aligned reads datafile FKPM calculation
+# briefly: +DSB minus noDSB for hg38
+doBackgroundSubtractionHg38(
+  pathToSampleInfo = "./example/step3_sampleInfo_hg38.txt",
+  inputDataDir = "./output/output2_spikeInCorrected/",
+  outputDir = "./output/output3_bkgrdSubtracted/"
+)
+
+
+# perform binning of RaPID-seq to target window size (e.g., 25kbps)
+# * this ONLY applies to hg38-aligned samples
+# * plasmid-aligned samples are too small for binning (e.g., 3kbps)
+doBinRapid(
+  sampleInfo = "./example/step3_sampleInfo_hg38.txt",
+  genomeName = "hg38",
+  inputDir = "./output/output3_bkgrdSubtracted/",
+  outputDir = "./output/output3_bkgrdSubtracted/"
+)
+
+
+#
+# plasmid-aligned reads datafile FKPM calculation
+doBackgroundSubtractionPlasmid(
+  pathToSampleInfo = "./example/step3_sampleInfo_plasmid.txt",
+  inputDataDir = "./output/output2_spikeInCorrected/",
+  outputDir = "./output/output3_bkgrdSubtracted/"
+)
+```
+
+
+
+STEP 4 - make plots
+```{r}
+## Use separate R notebooks:
+# 'plot_hg38.Rmd'
+# 'plot_plasmid.Rmd
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

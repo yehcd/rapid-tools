@@ -1,0 +1,129 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+<!-- # ```{r} -->
+<!-- # plot(cars) -->
+<!-- ``` -->
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+
+# LIBRARIES 
+```{r}
+source("../resources/commonFunctions.R")
+source("../resources/hicFunctions.R")
+
+```
+
+
+# BASIC SETUP
+Reading and loading basic data, make GRanges for DSB
+
+
+IMPORTANT: To use this R Notebook, the appropriate HIC datafile must first be downloaded!
+e.g., for K562 cells:
+
+  https://www.encodeproject.org/files/ENCFF621AIY/@@download/ENCFF621AIY.hic
+
+```{r}
+pathToHiC <- "<REPLACE WITH PATH TO HIC DATA (e.g., ENCFF621AIY.hic)>"
+
+
+# resolution is binSize to use; should match between RaPID-seq data & HiC/4C data. 
+# default: 25kbps.
+resolution <- 25000
+regionSize <- 5E6
+
+# nominally 10X size of RAD51 bound region (i.e., 15kbps, each side)
+dsbMaskSize <- 10 * 15000
+```
+
+
+# MAIN LOADING
+mass loading of all sample definitions into a list
+```{r}
+sampleFiles <- dir(path = "./example/", pattern = ".txt")
+
+ls.sampleFiles <-
+  lapply(
+    X = paste0("./example/", sampleFiles),
+    FUN = read.csv,
+    header = TRUE,
+    sep = "\t",
+    stringsAsFactors = FALSE
+  )
+
+df.sampleFiles <- ls.sampleFiles %>% as.data.frame()
+# df.sampleFiles
+```
+
+
+Generic loading of all RaPID.bw files and running through re-scaling with HiC data
+and aggregating into a single list file
+
+This process will take several minutes per sample.
+
+```{r}
+# initialize
+setwd("./example/")
+ls.final <- list()
+
+#df.samples <- df.sampleFiles[1:1,]    # subset testing
+df.samples <- df.sampleFiles
+df.samples
+
+for (i in 1:nrow(df.samples))
+{
+  # load data initially as GRanges, then unlist to dataframe
+  result <- aggregateRapidHic(
+    pathToHiC = pathToHiC,
+    pathToRapid = df.samples$rapid_datafile[i],
+    dsbSite = df.samples$dsbSiteString[i],
+    resolution = resolution,
+    regionSize = regionSize,
+    dsbMaskSize = dsbMaskSize
+  ) %>% mcols %>% as.data.frame()
+  
+  # append read data to list
+  ls.final <- append(ls.final, list(result))
+  names(ls.final)[i] <- df.samples$shortName[i]
+}
+
+ls.final
+```
+
+
+dump 'ls.final' list object to file to avoid having to reload data & re-calculate HiC/BALANCED values again
+```{r}
+dumpName <-
+  "./example/HBB_HicRaPID.RData"
+
+saveRDS(object = ls.final, file = dumpName)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

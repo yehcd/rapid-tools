@@ -1,0 +1,194 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+  
+  This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+
+LIBRARIES
+```{r}
+source ("../resources/commonFunctions.R")
+source ("../resources/commonFunctions_RapidPlasmid.R")
+
+```
+
+
+
+load basic starting information
+```{r}
+getwd()
+
+# standard params
+resolution <- 25000
+dsbSite <- "chr11:5,226,985" # sgHBB (gCY201)
+dsbSite <- parseDsbSiteString(dsbSite)
+
+
+# input params for plotting
+pathtoSampleInfo <- "./example/step4_sampleInfo_plot.txt"
+
+pathToInputData <- "./output/output3_bkgrdSubtracted/"
+pathToOutput <- "./output/output4_plots/"
+
+pathToGatcBed <- "../resources/gatcMap_plasmids.bed"
+
+
+
+# load 'sampleInfo' definitions
+df.sampleDefinitions <-
+  read.csv(
+    file = pathtoSampleInfo,
+    header = TRUE,
+    sep = "\t",
+    colClasses = c('character', # outputName
+                   'character', # bigwig_data_hg38
+                   'character', # bigwig_data_plasmid
+                   'character') # plasmid_seqname
+  )
+# df.sampleDefinitions
+
+
+# resolve DSB site to tile at given analyzeRaPID() resolution
+# for HBB (gCY201), this 25kbps tile midpoint is "chr11:5237500"
+# DSB is located at "chr11:5,226,985"
+
+resolvedDsbTile <- resolveDsb(dsbParsed = dsbSite, resolution = resolution)
+# resolvedDsbTile
+
+
+```
+
+
+
+load data from STEP 3 (after '+DSB minus noDSB' background subtraction)
+```{r}
+## lapply LOAD bigWig data into grangeslist with loadBigwigToGranges()
+#   loadBigwigToGranges() is a wrapped for rtracklayer that enforces proper hg38     
+#   seqlevels and drops non-standard chromosomes
+
+setwd(pathToInputData)
+grl.data <-
+  sapply(X = df.sampleDefinitions$bigwig_data_hg38, FUN = loadBigwigToGranges)
+
+
+# 
+## set data subset for plotting (i.e., DSB +/- 3Mbps)
+gr.dsb <- GRanges(seqnames = dsbSite$chr, ranges = IRanges(start = resolvedDsbTile['midpoint'] - 3E6, end = resolvedDsbTile['midpoint'] + 3E6))
+
+
+# set data subset for ROI total score calculation (i.e., DSB +/- 2Mbps)
+gr.scoreRoi <- GRanges(seqnames = dsbSite$chr, ranges = IRanges(start = resolvedDsbTile['midpoint'] - 2E6, end = resolvedDsbTile['midpoint'] + 2E6))
+
+
+# check regions made
+gr.dsb
+gr.scoreRoi
+```
+
+
+
+```{r}
+# find max Y axis value in ROI (DSB+/- 3Mbps) for all loaded samples
+yMax <- 0
+
+for(i in 1:length(grl.data)) {
+  # load individual GRanges RaPID data
+  gr.rapid <- grl.data[[i]]
+  
+  # combine with RaPID-seq data & DO NOT NORMALIZE
+  gr.plot <-
+    getDsbOverlaps(gr.data = gr.rapid,
+                   gr.dsb = gr.dsb,
+                   type = "include") #%>% normalizeRapidLocally
+  
+  # set max Y
+  sampleName <- grl.data %>% names %>% nth(i)
+  yMaxSample <- max(gr.plot$score)
+  print(paste0(sampleName, " yMax: ", yMaxSample))
+  
+  if (yMaxSample > yMax) {
+    yMax <- yMaxSample
+  }
+  
+}
+
+print("---")
+print("plotting yMax set to: ")
+yMax
+```
+
+
+# MAIN ACTION
+make plots without dotted line for reference data (noPlasmid)
+```{r}
+print(paste0("input Y-max = ", yMax))
+
+# initialize dataframe for total score information
+totalScore_noMask <- numeric(length = length(grl.data))
+
+
+# main action
+for (i in 1:length(grl.data)) {
+  # set output filenames
+  outputName <- grl.data %>% names() %>% nth(i)
+  outputName <- paste0("_hg38_noRef", outputName)
+  
+  # load data
+  gr.rapid <- grl.data[[i]]
+  
+  # combine with RaPID-seq data & DO NOT NORMALIZE
+  # for plotting data (DSB +/- 3Mbps)
+  gr.plot <-
+    getDsbOverlaps(gr.data = gr.rapid,
+                   gr.dsb = gr.dsb,
+                   type = "include")
+  
+  # get midpoint
+  gr.plot$midpoint <- mid(gr.plot) - resolvedDsbTile['midpoint']
+  df.plot <- gr.plot %>% as.data.frame()
+  
+  # make plot
+  makePlotGeneric(
+    df.plot = df.plot,
+    outputPath = pathToOutput,
+    outputName = outputName,
+    yMax = yMax
+  )
+  
+  # save roi score
+  # this is lesss than the plotting data! (DSB +/- 2Mbps)  
+  gr.roiCalc <-
+    getDsbOverlaps(gr.data = gr.plot,
+                   gr.dsb = gr.scoreRoi,
+                   type = "include")
+  
+  
+  totalScore_noMask[i] <-
+    calcTotalScore(gr.rapid =  gr.roiCalc, gr.gatcMask = NULL)
+  
+}
+
+
+# make summary output for total score
+df.totalScore <- grl.data %>% names() %>% data.frame()
+names(df.totalScore) <- c("sampleName")
+df.totalScore$roiTotalScore <- totalScore_noMask
+
+df.totalScore
+write_tsv(x = df.totalScore,
+          file = paste0(pathToOutput, "_hg38_Summmary.txt"), )
+
+```
+
+

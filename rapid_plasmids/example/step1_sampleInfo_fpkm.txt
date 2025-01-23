@@ -1,0 +1,5 @@
+outputName	htseq_hg38	htseq_plasmid
+C3R5X126_A1_gCY321_noPlasmid	C3R5X126_A1_gCY321_noPlasmid.HTseq.out.gz	plasmid_C3R5X126_A1_gCY321_noPlasmid.HTseq.out.gz
+C3R5X126_A2_gCY321_pCY29	C3R5X126_A2_gCY321_pCY29.HTseq.out.gz	plasmid_C3R5X126_A2_gCY321_pCY29.HTseq.out.gz
+C3R5X126_B1_gCY201_noPlasmid	C3R5X126_B1_gCY201_noPlasmid.HTseq.out.gz	plasmid_C3R5X126_B1_gCY201_noPlasmid.HTseq.out.gz
+C3R5X126_B2_gCY201_pCY29	C3R5X126_B2_gCY201_pCY29.HTseq.out.gz	plasmid_C3R5X126_B2_gCY201_pCY29.HTseq.out.gz

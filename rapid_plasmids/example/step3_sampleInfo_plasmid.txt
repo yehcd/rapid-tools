@@ -1,0 +1,3 @@
+outputName	bigwig_signal	bigwig_bkgrd	plasmid_seqname
+C3R5X126_plasmid_bkgrdSubtracted_B1-A1	C3R5X126_plasmid_spikeInCorr_B1-A1.bw	C3R5X126_plasmid_spikeInCorr_A1-A1.bw	pCY29_HBB_100
+C3R5X126_plasmid_bkgrdSubtracted_B2-A2	C3R5X126_plasmid_spikeInCorr_B2-A1.bw	C3R5X126_plasmid_spikeInCorr_A2-A1.bw	pCY29_HBB_100
