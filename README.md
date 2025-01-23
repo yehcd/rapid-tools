@@ -10,6 +10,7 @@ These tools generate bigWig datafiles, which can be directly viewed in the [Inte
 ![](https://github.com/yehcd/rapid-tools/blob/initial/misc/figures/rapid_workflow.png)
 
 <br />
+
 # preparation
 To ensure proper functioning, decompress the following files:
 
