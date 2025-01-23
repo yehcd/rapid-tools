@@ -8,7 +8,7 @@ These are simple bash scripts for automated pre-processing of raw FASTQ data fro
 * htseq-count of reads into GATC tiles
 
 
-## requirements:
+## requirements
 
 conda environment with the following packages and dependencies:
 	cutadapt
