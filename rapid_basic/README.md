@@ -1,4 +1,4 @@
-# RaPID-seq comparisons to chromatin conformation (HiC) data
+# RaPID-seq basic data processing
 This example includes the code and sample data for converting data from initial raw Illumina NGS processing and performing spike-in correction and background subtraction. Simply run:
 
 ```
