@@ -38,7 +38,7 @@ source ./rapidPreprocessing4.sh \
 ![ngs_standard_workflow](https://github.com/yehcd/rapid-tools/blob/initial/misc/figures/preprocessing_basic.PNG)
 
 
-## example for standard RaPID-seq NGS pre-processing
+## example for plasmid RaPID-seq NGS pre-processing
 For RaPID-seq experiments with plasmids, the plasmid reads are first extracted before performing alignments to the human genome.
 
 ```
